@@ -26,6 +26,7 @@ MACRO(build_dynamic_rule name)
             OCLintMetric
             OCLintHelper
             OCLintUtil
+            OCLintUtil2
             OCLintCore
         )
 
@@ -63,3 +64,5 @@ ADD_RULE_CATEGORY_DIRECTORY(naming)
 ADD_RULE_CATEGORY_DIRECTORY(redundant)
 ADD_RULE_CATEGORY_DIRECTORY(size)
 ADD_RULE_CATEGORY_DIRECTORY(unused)
+
+ADD_RULE_CATEGORY_DIRECTORY(smells)

@@ -45,8 +45,8 @@ else:
     process.call(f'{sys.executable} test -clean' + process.j_flag(args.j))
     process.call(f'{sys.executable} build -clean' + process.j_flag(args.j))
 process.call(f'{sys.executable} bundle')
-if environment.is_unix() and not args.release:
-    process.call(f'{sys.executable} dogFooding -enable-clang-static-analyzer')
+# if environment.is_unix() and not args.release:
+#    process.call(f'{sys.executable} dogFooding -enable-clang-static-analyzer')
 if args.archive:
     if args.release:
         process.call(f'{sys.executable} bundle -archive -release')

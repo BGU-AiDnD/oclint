@@ -1,9 +1,14 @@
+ADD_SUBDIRECTORY(util)
 
 SET (MetricSource
     CyclomaticComplexityMetric.cpp
     NcssMetric.cpp
     NPathComplexityMetric.cpp
     StmtDepthMetric.cpp
+
+    ClassPublicAccessorCountMetric.cpp
+    ClassPublicFieldCountMetric.cpp
+    IsClassSingletonMetric.cpp
 )
 
 IF (MINGW)
@@ -23,4 +28,7 @@ IF (MINGW)
     )
 ELSE()
     ADD_LIBRARY(OCLintMetric ${MetricSource})
+    TARGET_LINK_LIBRARIES(OCLintMetric
+        OCLintUtil2
+    )
 ENDIF()

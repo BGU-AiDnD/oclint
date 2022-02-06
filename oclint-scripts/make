@@ -1,4 +1,6 @@
 #! /bin/sh -e
 
-./ci -reset "$@"
-./ci -setup -release "$@"
+./build $1
+echo "Bundling..."
+./bundle
+echo "Done."
