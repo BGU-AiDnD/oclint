@@ -1,30 +1,39 @@
 #include "oclint/AbstractASTVisitorRule.h"
+#include "oclint/RuleConfiguration.h"
 #include "oclint/RuleSet.h"
-#include "oclint/metric/IsClassSingletonMetric.h"
-#include "oclint/metric/ClassPublicFieldCountMetric.h"
-#include "oclint/metric/ClassPublicAccessorCountMetric.h"
-#include <iostream>
+#include "oclint/metric/CyclomaticComplexityMetric.h"
 
 using namespace std;
 using namespace clang;
 using namespace oclint;
 
-class SingletonFinderRule : public AbstractASTVisitorRule<SingletonFinderRule>
+class ComplexClassRule : public AbstractASTVisitorRule<ComplexClassRule>
 {
 public:
     virtual const string name() const override
     {
-        return "anti-singleton";
+        return "Complex Class";
     }
 
     virtual int priority() const override
     {
-        return 1;
+        return 2;
     }
 
     virtual const string category() const override
     {
-        return "smells-mine";
+        return "size";
+    }
+
+    void applyDecl(RecordDecl *decl)
+    {
+        if (decl->isClass() || decl->isStruct())
+        {
+            if ((MethodVisitor{}).visit(decl))
+            {
+                addViolation(decl, this, "Class '" + decl->getName().str() + "'");
+            }
+        }
     }
 
 #ifdef DOCGEN
@@ -80,33 +89,40 @@ public:
     */
 #endif
 
-    virtual void setUp() override {}
-    virtual void tearDown() override {}
-
-    void applyOnClass() {
-
-    }
-
-    bool VisitCXXRecordDecl(CXXRecordDecl *decl) {
-        if (decl->isClass() || decl->isStruct()) {
-            bool isSingleton = (IsClassSingletonMetric{}).calculate(decl);
-            if (isSingleton)
-            {
-                int publicFieldsCount = (ClassPublicFieldCountMetric{}).count(decl);
-                int publicAccessorCount = (ClassPublicAccessorCountMetric{}).count(decl);
-                if (publicFieldsCount + publicAccessorCount > 1)
-                {
-                    addViolation(decl, this, "Class `" + decl->getName().str() + "` in an anti-singleton");
-                }
-
-//                std::cout << "Found singleton `" << decl->getQualifiedNameAsString() << "`";
-//                std::cout << ", with " << publicFieldsCount << " public fields";
-//                std::cout << ", and " << publicAccessorCount << " public accessors";
-//                std::cout << "\n";
-            }
-        }
+    bool VisitRecordDecl(RecordDecl *decl)
+    {
+        applyDecl(decl);
         return true;
     }
+
+private:
+    class MethodVisitor : public clang::RecursiveASTVisitor<MethodVisitor>
+    {
+    public:
+        bool isClassComplex;
+
+        bool visit(Decl *decl)
+        {
+            TraverseDecl(decl);
+            return isClassComplex;
+        }
+
+        bool VisitFunctionDecl(FunctionDecl* decl)
+        {
+            if (decl->getKind() != Decl::CXXConstructor &&
+                decl->getKind() != Decl::CXXDestructor)
+            {
+                int ccn = getCyclomaticComplexity(decl);
+                int threshold = RuleConfiguration::intForKey("CYCLOMATIC_COMPLEXITY", 10);
+                if (ccn > threshold)
+                {
+                    isClassComplex = true;
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
 };
 
-static RuleSet rules(new SingletonFinderRule());
+static RuleSet rules(new ComplexClassRule());

@@ -12,3 +12,6 @@ SET(LIST_OF_RULES
     )
 
 BUILD_DYNAMIC_RULES("${LIST_OF_RULES}")
+
+SET(BuildComplexClassRule ComplexClass)
+BUILD_DYNAMIC_RULES("${BuildComplexClassRule}")

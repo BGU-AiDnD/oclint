@@ -10,3 +10,6 @@ BUILD_TEST(SizeTests
     TooManyMethodsRuleTest.cpp
     TooManyParametersRuleTest.cpp
 )
+
+BUILD_TEST(ComplexClassRuleTest
+ComplexClassRuleTest.cpp)
