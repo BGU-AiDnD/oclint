@@ -1,30 +1,60 @@
 #include "oclint/AbstractASTVisitorRule.h"
 #include "oclint/RuleSet.h"
-#include "oclint/metric/IsClassSingletonMetric.h"
 #include "oclint/metric/ClassPublicFieldCountMetric.h"
 #include "oclint/metric/ClassPublicAccessorCountMetric.h"
-#include <iostream>
+#include "oclint/metric/WocMetric.h"
+#include "oclint/metric/WmcMetric.h"
+#include "oclint/util/ThresholdsConstants.h"
 
 using namespace std;
 using namespace clang;
 using namespace oclint;
 
-class SingletonFinderRule : public AbstractASTVisitorRule<SingletonFinderRule>
+class DataClassRule : public AbstractASTVisitorRule<DataClassRule>
 {
 public:
     virtual const string name() const override
     {
-        return "anti-singleton";
+        return "Data Class";
     }
 
     virtual int priority() const override
     {
-        return 1;
+        return 2;
     }
 
     virtual const string category() const override
     {
-        return "smells-mine";
+        return "design";
+    }
+
+    void applyDecl(RecordDecl *decl)
+    {
+        if (decl->isClass() || decl->isStruct())
+        {
+            double woc = (WocMetric{}).calculate(decl);
+            int nopa = (ClassPublicFieldCountMetric{}).count(decl);
+            int noam = (ClassPublicAccessorCountMetric{true}).count(decl);
+            int wmc = (WmcMetric{}).measure(decl);
+
+            int nopData = nopa + noam;
+            // TODO: calculate highWmc and veryHighWmc
+            int highWmc = 100;
+            int veryHighWmc = 150;
+            bool moreFewPublicComplexityNotHigh = nopData > ThresholdsConstants::FEW && wmc < highWmc;
+            bool manyPublicComplexityNotVeryHigh =  nopData > ThresholdsConstants::MANY && wmc < veryHighWmc;
+            bool dataRatherThanServices = woc < ThresholdsConstants::ONE_THIRD;
+
+            if ((moreFewPublicComplexityNotHigh || manyPublicComplexityNotVeryHigh) && dataRatherThanServices) {
+                std::string message =
+                    "Class '" + decl->getName().str() + "', " +
+                    "WOC = " + to_string(woc) + ", " +
+                    "NOPA = " + to_string(nopa) + ", " +
+                    "NOAM = " + to_string(noam) + ", " +
+                    "WMC = " + to_string(wmc) + ", ";
+                addViolation(decl, this, message);
+            }
+        }
     }
 
 #ifdef DOCGEN
@@ -83,30 +113,11 @@ public:
     virtual void setUp() override {}
     virtual void tearDown() override {}
 
-    void applyOnClass() {
-
-    }
-
-    bool VisitCXXRecordDecl(CXXRecordDecl *decl) {
-        if (decl->isClass() || decl->isStruct()) {
-            bool isSingleton = (IsClassSingletonMetric{}).calculate(decl);
-            if (isSingleton)
-            {
-                int publicFieldsCount = (ClassPublicFieldCountMetric{}).count(decl);
-                int publicAccessorCount = (ClassPublicAccessorCountMetric{false}).count(decl);
-                if (publicFieldsCount + publicAccessorCount > 1)
-                {
-                    addViolation(decl, this, "Class `" + decl->getName().str() + "` in an anti-singleton");
-                }
-
-//                std::cout << "Found singleton `" << decl->getQualifiedNameAsString() << "`";
-//                std::cout << ", with " << publicFieldsCount << " public fields";
-//                std::cout << ", and " << publicAccessorCount << " public accessors";
-//                std::cout << "\n";
-            }
-        }
+    bool VisitRecordDecl(RecordDecl *decl)
+    {
+        applyDecl(decl);
         return true;
     }
 };
 
-static RuleSet rules(new SingletonFinderRule());
+static RuleSet rules(new DataClassRule());

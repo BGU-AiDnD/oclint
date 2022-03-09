@@ -1,7 +1,7 @@
 #include "oclint/metric/ClassPublicFieldCountMetric.h"
 #include "oclint/util/ASTUtil2.h"
 
-int ClassPublicFieldCountMetric::count(clang::CXXRecordDecl *decl)
+int ClassPublicFieldCountMetric::count(clang::RecordDecl *decl)
 {
     counter = 0;
     TraverseDecl(decl);

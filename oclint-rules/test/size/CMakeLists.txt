@@ -9,7 +9,5 @@ BUILD_TEST(SizeTests
     TooManyFieldsRuleTest.cpp
     TooManyMethodsRuleTest.cpp
     TooManyParametersRuleTest.cpp
+    ComplexClassRuleTest.cpp
 )
-
-BUILD_TEST(ComplexClassRuleTest
-ComplexClassRuleTest.cpp)

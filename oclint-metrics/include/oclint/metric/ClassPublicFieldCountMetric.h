@@ -10,7 +10,7 @@ private:
     int counter;
 
 public:
-    int count(clang::CXXRecordDecl*);
+    int count(clang::RecordDecl*);
 
     bool VisitFieldDecl(clang::FieldDecl* decl);
 };

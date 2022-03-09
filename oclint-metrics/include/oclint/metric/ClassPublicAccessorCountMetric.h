@@ -8,11 +8,15 @@ class ClassPublicAccessorCountMetric : public clang::RecursiveASTVisitor<ClassPu
 {
 private:
     int counter;
+    bool shouldCountSetters;
 
 public:
-    int count(clang::CXXRecordDecl*);
+    ClassPublicAccessorCountMetric(bool shouldCountSetters) :
+        shouldCountSetters{shouldCountSetters} {}
 
-    bool VisitCXXMethodDecl(clang::CXXMethodDecl* decl);
+    int count(clang::RecordDecl*);
+
+    bool VisitFunctionDecl(clang::FunctionDecl* decl);
 };
 
 #endif //OCLINT_METRIC_CLASSPUBLICACCESSORCOUNT_H

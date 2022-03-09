@@ -8,7 +8,9 @@ SET (MetricSource
 
     ClassPublicAccessorCountMetric.cpp
     ClassPublicFieldCountMetric.cpp
+    ClassPublicMethodCountMetric.cpp
     IsClassSingletonMetric.cpp
+    WmcMetric.cpp
 )
 
 IF (MINGW)
