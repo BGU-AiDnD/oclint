@@ -10,6 +10,7 @@ SET (MetricSource
     ClassPublicFieldCountMetric.cpp
     ClassPublicMethodCountMetric.cpp
     IsClassSingletonMetric.cpp
+    MethodMaxNestingMetric.cpp
     WmcMetric.cpp
 )
 
