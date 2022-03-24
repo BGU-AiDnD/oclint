@@ -3,6 +3,8 @@
 #include "oclint/metric/CyclomaticComplexityMetric.h"
 #include <iostream>
 
+using namespace oclint;
+
 int WmcMetric::measure(clang::RecordDecl *decl)
 {
     sum = 0;

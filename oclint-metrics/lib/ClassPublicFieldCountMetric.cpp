@@ -1,6 +1,8 @@
 #include "oclint/metric/ClassPublicFieldCountMetric.h"
 #include "oclint/util/ASTUtil2.h"
 
+using namespace oclint;
+
 int ClassPublicFieldCountMetric::count(clang::RecordDecl *decl)
 {
     counter = 0;

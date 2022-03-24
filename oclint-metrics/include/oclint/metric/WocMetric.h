@@ -5,6 +5,8 @@
 #include "ClassPublicAccessorCountMetric.h"
 #include "ClassPublicMethodCountMetric.h"
 
+namespace oclint
+{
 class WocMetric
 {
 public:
@@ -19,5 +21,6 @@ public:
         return (publicMethodsCount - noam) / ((double)publicMethodsCount);
     }
 };
+}
 
 #endif //OCLINT_METRICS_WOCMETRIC_H

@@ -4,6 +4,8 @@
 #include <clang/AST/AST.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 
+namespace oclint
+{
 class WmcMetric : public clang::RecursiveASTVisitor<WmcMetric>
 {
 private:
@@ -14,5 +16,6 @@ public:
 
     bool VisitFunctionDecl(clang::FunctionDecl* decl);
 };
+}
 
 #endif //OCLINT_METRICS_WMCMETRIC_H

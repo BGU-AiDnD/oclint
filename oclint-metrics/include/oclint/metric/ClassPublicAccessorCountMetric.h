@@ -4,6 +4,8 @@
 #include <clang/AST/AST.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 
+namespace oclint
+{
 class ClassPublicAccessorCountMetric : public clang::RecursiveASTVisitor<ClassPublicAccessorCountMetric>
 {
 private:
@@ -18,5 +20,6 @@ public:
 
     bool VisitFunctionDecl(clang::FunctionDecl* decl);
 };
+}
 
 #endif //OCLINT_METRIC_CLASSPUBLICACCESSORCOUNT_H

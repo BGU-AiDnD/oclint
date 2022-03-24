@@ -2,6 +2,8 @@
 #include "oclint/util/ASTUtil2.h"
 #include <iostream>
 
+using namespace oclint;
+
 int ClassPublicAccessorCountMetric::count(clang::RecordDecl *decl)
 {
     counter = 0;
