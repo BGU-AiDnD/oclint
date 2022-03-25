@@ -61,7 +61,7 @@ public:
 
     virtual const string category() const override
     {
-        return "design";
+        return "size";
     }
 
     void applyDecl(RecordDecl *decl)
@@ -147,7 +147,10 @@ private:
         int maxCyclomaticComplexity;
         int maxMaxNesting;
 
-        explicit MethodVisitor(clang::SourceManager &sourceManager) : sourceManager{sourceManager}, isFirst{true} {}
+        explicit MethodVisitor(clang::SourceManager &sourceManager) :
+            sourceManager{sourceManager}, isFirst{true},
+            maxLineCount{0}, maxCyclomaticComplexity{0},
+            maxMaxNesting{0} {}
 
         bool VisitFunctionDecl(FunctionDecl* decl) {
             const int lineCount = getLineCount(decl->getSourceRange(), sourceManager);
