@@ -3,6 +3,7 @@
 #include "oclint/util/ASTUtil.h"
 #include "oclint/metric/CyclomaticComplexityMetric.h"
 #include "oclint/metric/MethodMaxNestingMetric.h"
+#include "oclint/metric/MethodNumOfLocalVarsMetric.h"
 #include <iostream>
 
 using namespace std;
@@ -69,7 +70,19 @@ public:
         if (decl->isClass() || decl->isStruct())
         {
             clang::SourceManager &sourceManager = _carrier->getSourceManager();
-            (MethodVisitor{sourceManager}).TraverseDecl(decl);
+            auto visitor1 = MethodVisitor1{sourceManager};
+//            visitor1.TraverseDecl(decl);
+
+            if (visitor1.maxLinesCount >= 33 && visitor1.maxCyclomaticComplexity >= 7 && visitor1.maxMaxNesting >= 6)
+            {
+                addViolation(decl, this, "Class `" + decl->getNameAsString() + "`, LOC = " +
+                    to_string(visitor1.maxLinesCount) + ", CC = " + to_string(visitor1.maxCyclomaticComplexity) +
+                    ", Max nesting = " + to_string(visitor1.maxMaxNesting));
+                return;
+            }
+
+            auto visitor2 = MethodVisitor2{};
+            visitor2.TraverseDecl(decl);
         }
     }
 
@@ -136,20 +149,20 @@ public:
     virtual void tearDown() override {}
 
 private:
-    class MethodVisitor : public clang::RecursiveASTVisitor<MethodVisitor> {
+    class MethodVisitor1 : public clang::RecursiveASTVisitor<MethodVisitor1> {
     private:
         clang::SourceManager &sourceManager;
 
         bool isFirst;
 
     public:
-        int maxLineCount;
+        int maxLinesCount;
         int maxCyclomaticComplexity;
         int maxMaxNesting;
 
-        explicit MethodVisitor(clang::SourceManager &sourceManager) :
+        explicit MethodVisitor1(clang::SourceManager &sourceManager) :
             sourceManager{sourceManager}, isFirst{true},
-            maxLineCount{0}, maxCyclomaticComplexity{0},
+            maxLinesCount{0}, maxCyclomaticComplexity{0},
             maxMaxNesting{0} {}
 
         bool VisitFunctionDecl(FunctionDecl* decl) {
@@ -157,16 +170,32 @@ private:
             const int cc = getCyclomaticComplexity(decl);
             const int maxNesting = (MethodMaxNestingMetric{}).calculate(decl);
             if (isFirst) {
-                maxLineCount = lineCount;
+                maxLinesCount = lineCount;
                 maxCyclomaticComplexity = cc;
                 maxMaxNesting = maxNesting;
             }
             else {
-                maxLineCount = maxLineCount < lineCount ? lineCount : maxLineCount;
+                maxLinesCount = maxLinesCount < lineCount ? lineCount : maxLinesCount;
                 maxCyclomaticComplexity = maxCyclomaticComplexity < cc ? cc :  maxCyclomaticComplexity;
                 maxMaxNesting = maxMaxNesting < maxNesting  ? maxNesting : maxMaxNesting;
             }
             isFirst = false;
+            return true;
+        }
+    };
+
+    class MethodVisitor2 : public clang::RecursiveASTVisitor<MethodVisitor2> {
+    public:
+        int methodsCount;
+        long sumLocalVarsCount;
+        long sumFieldsAccessCount;
+
+        explicit MethodVisitor2() :
+            methodsCount{0}, sumLocalVarsCount{0}, sumFieldsAccessCount{0} {}
+
+        bool VisitFunctionDecl(FunctionDecl* decl) {
+            methodsCount++;
+            sumLocalVarsCount += (MethodNumOfLocalVarsMetric{}).calculate(decl);
             return true;
         }
     };

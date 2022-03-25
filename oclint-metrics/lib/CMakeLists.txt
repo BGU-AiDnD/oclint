@@ -11,6 +11,7 @@ SET (MetricSource
     ClassPublicMethodCountMetric.cpp
     IsClassSingletonMetric.cpp
     MethodMaxNestingMetric.cpp
+    MethodNumOfLocalVarsMetric.cpp
     WmcMetric.cpp
 )
 

@@ -37,7 +37,6 @@ namespace oclint
     public:
         int calculate(const clang::FunctionDecl *decl);
     };
-
 }
 
 #endif //OCLINT_METRICS_METHODMAXNESTINGMETRIC_H
