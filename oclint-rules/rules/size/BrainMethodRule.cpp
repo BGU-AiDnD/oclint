@@ -149,7 +149,8 @@ public:
     virtual void tearDown() override {}
 
 private:
-    class MethodVisitor1 : public clang::RecursiveASTVisitor<MethodVisitor1> {
+    class MethodVisitor1 : public clang::RecursiveASTVisitor<MethodVisitor1>
+    {
     private:
         clang::SourceManager &sourceManager;
 
@@ -165,16 +166,19 @@ private:
             maxLinesCount{0}, maxCyclomaticComplexity{0},
             maxMaxNesting{0} {}
 
-        bool VisitFunctionDecl(FunctionDecl* decl) {
+        bool VisitFunctionDecl(FunctionDecl* decl)
+        {
             const int lineCount = getLineCount(decl->getSourceRange(), sourceManager);
             const int cc = getCyclomaticComplexity(decl);
             const int maxNesting = (MethodMaxNestingMetric{}).calculate(decl);
-            if (isFirst) {
+            if (isFirst)
+            {
                 maxLinesCount = lineCount;
                 maxCyclomaticComplexity = cc;
                 maxMaxNesting = maxNesting;
             }
-            else {
+            else
+            {
                 maxLinesCount = maxLinesCount < lineCount ? lineCount : maxLinesCount;
                 maxCyclomaticComplexity = maxCyclomaticComplexity < cc ? cc :  maxCyclomaticComplexity;
                 maxMaxNesting = maxMaxNesting < maxNesting  ? maxNesting : maxMaxNesting;
@@ -184,7 +188,8 @@ private:
         }
     };
 
-    class MethodVisitor2 : public clang::RecursiveASTVisitor<MethodVisitor2> {
+    class MethodVisitor2 : public clang::RecursiveASTVisitor<MethodVisitor2>
+    {
     public:
         int methodsCount;
         long sumLocalVarsCount;
@@ -193,7 +198,8 @@ private:
         explicit MethodVisitor2() :
             methodsCount{0}, sumLocalVarsCount{0}, sumFieldsAccessCount{0} {}
 
-        bool VisitFunctionDecl(FunctionDecl* decl) {
+        bool VisitFunctionDecl(FunctionDecl* decl)
+        {
             methodsCount++;
             sumLocalVarsCount += (MethodNumOfLocalVarsMetric{}).calculate(decl);
             return true;
