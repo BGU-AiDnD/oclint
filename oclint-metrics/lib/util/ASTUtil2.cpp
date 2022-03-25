@@ -69,17 +69,18 @@ bool hasGetterStructure(clang::FunctionDecl *decl)
     return false;
 }
 
+bool isNormalMethod(clang::FunctionDecl *decl)
+{
+    return decl->getKind() != clang::Decl::CXXConstructor &&
+           decl->getKind() != clang::Decl::CXXDestructor &&
+           !decl->isStatic();
+}
+
 bool isGetterMethod(clang::FunctionDecl *decl)
 {
-    if (decl->getKind() != clang::Decl::CXXConstructor &&
-        decl->getKind() != clang::Decl::CXXDestructor &&
-        !decl->isStatic())
-    {
-        // TODO: When checking for the name, maybe need to check that the
-        //  cyclomatic complexity is 0 or alternatively that there is only a
-        //  return statement.
-        return isGetterName(decl->getName()) || hasGetterStructure(decl);
-    }
-
-    return false;
+    // TODO: When checking for the name, maybe need to check that the
+    //  cyclomatic complexity is 0 or alternatively that there is only a
+    //  return statement.
+    return isNormalMethod(decl) &&
+           (isGetterName(decl->getName()) || hasGetterStructure(decl));
 }
