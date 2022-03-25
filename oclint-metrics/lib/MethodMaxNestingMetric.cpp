@@ -84,6 +84,7 @@ int MethodMaxNestingMetric::traverseStatement(clang::Stmt *stmt)
                 );
             }
 
+            // TODO: 2 or 1?
             // 2 because 1 for the switch itself and another 1 for the case.
             nesting = 2 + nesting;
         }

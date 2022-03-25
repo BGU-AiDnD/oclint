@@ -1,6 +1,7 @@
 #include "oclint/AbstractASTVisitorRule.h"
 #include "oclint/RuleSet.h"
 #include "oclint/util/ASTUtil.h"
+#include "oclint/util/ASTUtil2.h"
 #include "oclint/metric/CyclomaticComplexityMetric.h"
 #include "oclint/metric/MethodMaxNestingMetric.h"
 #include "oclint/metric/MethodNumOfLocalVarsMetric.h"

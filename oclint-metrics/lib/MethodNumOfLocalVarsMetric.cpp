@@ -11,7 +11,8 @@ int MethodNumOfLocalVarsMetric::calculate(clang::FunctionDecl *decl)
 
 bool MethodNumOfLocalVarsMetric::VisitVarDecl(clang::VarDecl *decl)
 {
-    // This also includes parameters
+    // TODO: Should include static variables?
+    // This also includes parameters.
     count++;
     return true;
 }

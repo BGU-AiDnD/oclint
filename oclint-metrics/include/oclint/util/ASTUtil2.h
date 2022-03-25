@@ -10,4 +10,6 @@ clang::QualType getCanonicalTypeUnqualifiedNoPointer(clang::QualType type);
 clang::QualType getCanonicalTypeOfTypeDecl(clang::TypeDecl *decl);
 bool areOfSameUnderlyingType(clang::QualType type, clang::TypeDecl *typeDecl);
 
+bool isGetterMethod(clang::FunctionDecl *decl);
+
 #endif //OCLINT_METRICS_ASTUTILS_H
