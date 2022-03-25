@@ -9,10 +9,12 @@ int MethodNumOfLocalVarsMetric::calculate(clang::FunctionDecl *decl)
     return count;
 }
 
+// This also includes parameters.
 bool MethodNumOfLocalVarsMetric::VisitVarDecl(clang::VarDecl *decl)
 {
     // TODO: Should include static variables?
-    // This also includes parameters.
+    // TODO: Should check `decl->isLocalVarDeclOrParm()` before incrementing
+    //   the counter?
     count++;
     return true;
 }

@@ -81,6 +81,10 @@ bool isGetterMethod(clang::FunctionDecl *decl)
     // TODO: When checking for the name, maybe need to check that the
     //  cyclomatic complexity is 0 or alternatively that there is only a
     //  return statement.
+
+    // TODO: what is considered a getter structure?
+    //  for example: `return x;` is, but is `return array[i];` (`i` is a parameter)?
+    //  or `return x + 1;`, `return cast<TagDecl*>(this)->getSomething();`?
     return isNormalMethod(decl) &&
            (isGetterName(decl->getName()) || hasGetterStructure(decl));
 }
