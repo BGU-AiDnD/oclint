@@ -12,5 +12,6 @@ bool areOfSameUnderlyingType(clang::QualType type, clang::TypeDecl *typeDecl);
 
 bool isNormalMethod(clang::FunctionDecl *decl);
 bool isGetterMethod(clang::FunctionDecl *decl);
+bool isSetterMethod(clang::FunctionDecl *decl);
 
 #endif //OCLINT_METRICS_ASTUTILS_H

@@ -1,5 +1,6 @@
 #include "oclint/util/ASTUtil2.h"
 #include <regex>
+#include <iostream>
 
 clang::QualType getCanonicalTypeUnqualifiedNoPointer(clang::QualType type)
 {
@@ -21,13 +22,31 @@ bool areOfSameUnderlyingType(clang::QualType type, clang::TypeDecl *typeDecl)
     return getCanonicalTypeUnqualifiedNoPointer(type) == getCanonicalTypeOfTypeDecl(typeDecl);
 }
 
-bool isGetterName(clang::StringRef nameRef)
+bool isVoidType(clang::QualType type)
 {
+    return !type.hasQualifiers() &&
+           type.getCanonicalType().getTypePtr()->getUnqualifiedDesugaredType()->isVoidType();
+}
+
+bool isAccessorName(const clang::StringRef nameRef, const char firstLetter)
+{
+    std::stringstream regexPatternSs;
+    regexPatternSs << "^[" << char(toupper(firstLetter)) << firstLetter << "]et[A-Z]";
+    std::regex nameRegex{regexPatternSs.str()};
     std::string name = nameRef.str();
-    std::regex nameRegex{"^[Gg]et[A-Z]"};
     auto words_begin = std::sregex_iterator(name.begin(), name.end(), nameRegex);
     auto words_end = std::sregex_iterator();
     return std::distance(words_begin, words_end) > 0;
+}
+
+bool isGetterName(const clang::StringRef nameRef)
+{
+    return isAccessorName(nameRef, 'g');
+}
+
+bool isSetterName(const clang::StringRef nameRef)
+{
+    return isAccessorName(nameRef, 's');
 }
 
 bool hasGetterStructure(clang::FunctionDecl *decl)
@@ -36,37 +55,122 @@ bool hasGetterStructure(clang::FunctionDecl *decl)
     {
         return false;
     }
-    if (auto *compoundStmt = clang::dyn_cast<clang::CompoundStmt>(decl->getBody()))
-    {
-        // Now we check that the body of the function is of the form:
-        // `return x;` where `x` is a field of the class this function is
-        // declared in.
 
-        // Exactly 1 statement
-        if (std::distance(compoundStmt->body_begin(), compoundStmt->body_end()) != 1)
+    auto *compoundStmt = clang::dyn_cast<clang::CompoundStmt>(decl->getBody());
+    if (!compoundStmt)
+    {
+        return false;
+    }
+
+    // Now we check that the body of the function is of the form:
+    // `return x;` where `x` is a field of the class this function is
+    // declared in.
+
+    // Exactly 1 statement
+    if (std::distance(compoundStmt->body_begin(), compoundStmt->body_end()) != 1)
+    {
+        return false;
+    }
+
+    clang::Stmt *stmt = *compoundStmt->body_begin();
+    clang::ReturnStmt *returnStmt;
+    clang::ImplicitCastExpr *implicitCastExpr;
+    clang::MemberExpr *memberExpr;
+    clang::FieldDecl *fieldDecl;
+    clang::RecordDecl *functionRecordDecl;
+    if (!((returnStmt = clang::dyn_cast<clang::ReturnStmt>(stmt)) &&
+          (implicitCastExpr = clang::dyn_cast<clang::ImplicitCastExpr>(returnStmt->getRetValue())) &&
+          implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
+          (memberExpr = clang::dyn_cast<clang::MemberExpr>(implicitCastExpr->getSubExpr())) &&
+          (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
+          (functionRecordDecl = clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) &&
+          fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl()))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool hasSetterStructure(clang::FunctionDecl *decl)
+{
+    if (decl->param_size() != 1)
+    {
+        return false;
+    }
+
+    auto *compoundStmt = clang::dyn_cast<clang::CompoundStmt>(decl->getBody());
+    if (!compoundStmt)
+    {
+        return false;
+    }
+
+    // Now we check that the body of the function is of the form:
+    // `this->x = x;` and optionally followed by `return this;`
+    // where `x` is the only parameter of the function and there is a field
+    // of the class this function is declared in called `x`.
+
+    auto *body_begin = compoundStmt->body_begin();
+    auto *body_end = compoundStmt->body_end();
+    auto *bodyStatementsIt = body_begin;
+    long bodyStatementsCount = std::distance(body_begin, body_end);
+
+    if (bodyStatementsCount == 0)
+    {
+        return false;
+    }
+
+    clang::RecordDecl *functionRecordDecl;
+    clang::Stmt *firstStmt = *bodyStatementsIt;
+    clang::BinaryOperator *binaryOperator;
+    clang::MemberExpr *memberExpr;
+    clang::FieldDecl *fieldDecl;
+    clang::ImplicitCastExpr *implicitCastExpr;
+    clang::DeclRefExpr *declRefExpr;
+    clang::VarDecl *referencedVarDecl;
+    clang::ParmVarDecl *paramVarDecl = decl->getParamDecl(0);
+    if (!((functionRecordDecl = clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) &&
+          (binaryOperator = clang::dyn_cast<clang::BinaryOperator>(firstStmt)) &&
+          binaryOperator->getOpcode() == clang::BO_Assign &&
+          (memberExpr = clang::dyn_cast<clang::MemberExpr>(binaryOperator->getLHS())) &&
+          (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
+          fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl() &&
+          (implicitCastExpr = clang::dyn_cast<clang::ImplicitCastExpr>(binaryOperator->getRHS())) &&
+          implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
+          (declRefExpr = clang::dyn_cast<clang::DeclRefExpr>(implicitCastExpr->getSubExpr())) &&
+          (referencedVarDecl = clang::dyn_cast<clang::VarDecl>(declRefExpr->getDecl())) &&
+          paramVarDecl->getCanonicalDecl() == referencedVarDecl->getCanonicalDecl()))
+    {
+        return false;
+    }
+
+    if (isVoidType(decl->getReturnType()))
+    {
+        // There should be nothing besides assigning the field a value.
+        if (bodyStatementsCount != 1)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        // Should return `this`.
+        if (bodyStatementsCount != 2)
         {
             return false;
         }
 
-        clang::Stmt *stmt = *compoundStmt->body_begin();
+        ++bodyStatementsIt;
+        clang::Stmt *secondStmt = *bodyStatementsIt;
         clang::ReturnStmt *returnStmt;
-        clang::ImplicitCastExpr *implicitCastExpr;
-        clang::MemberExpr *memberExpr;
-        clang::FieldDecl *fieldDecl;
-        clang::RecordDecl *functionRecordDecl;
-        if ((returnStmt = clang::dyn_cast<clang::ReturnStmt>(stmt)) &&
-            (implicitCastExpr = clang::dyn_cast<clang::ImplicitCastExpr>(returnStmt->getRetValue())) &&
-            implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
-            (memberExpr = clang::dyn_cast<clang::MemberExpr>(implicitCastExpr->getSubExpr())) &&
-            (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
-            (functionRecordDecl = clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) &&
-            fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl())
+        if (!((returnStmt = clang::dyn_cast<clang::ReturnStmt>(secondStmt)) &&
+              clang::isa<clang::CXXThisExpr>(returnStmt->getRetValue())))
         {
-            return true;
+            return false;
         }
     }
 
-    return false;
+    return true;
 }
 
 bool isNormalMethod(clang::FunctionDecl *decl)
@@ -82,9 +186,26 @@ bool isGetterMethod(clang::FunctionDecl *decl)
     //  cyclomatic complexity is 0 or alternatively that there is only a
     //  return statement.
 
-    // TODO: what is considered a getter structure?
+    // TODO: Advanced: Handle other implicit casts like integer conversions and
+    //  inheritance up casting. (Maybe using a while loop ignoring every
+    //  implicit cast but the last and only checking it).
+    // TODO: Advanced: Handle lazy initialization in the getter method.
+
+    // TODO: What is considered a getter structure?
     //  for example: `return x;` is, but is `return array[i];` (`i` is a parameter)?
     //  or `return x + 1;`, `return cast<TagDecl*>(this)->getSomething();`?
     return isNormalMethod(decl) &&
            (isGetterName(decl->getName()) || hasGetterStructure(decl));
+}
+
+bool isSetterMethod(clang::FunctionDecl *decl)
+{
+    // TODO: Same with getter, maybe check cyclomatic complexity or simple
+    //  structure (along with the name).
+    // TODO: Same with getter, handle other implicit casts.
+
+    // TODO: Decide on what makes a 'setter'. For example, is the following
+    //   a setter: `this->x += x;`?
+    return isNormalMethod(decl) &&
+           (isSetterName(decl->getName()) || hasSetterStructure(decl));
 }

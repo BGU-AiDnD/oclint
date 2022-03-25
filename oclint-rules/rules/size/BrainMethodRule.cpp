@@ -203,6 +203,7 @@ private:
         {
             methodsCount++;
             sumLocalVarsCount += (MethodNumOfLocalVarsMetric{}).calculate(decl);
+            bool c = isSetterMethod(decl);
             return true;
         }
     };
