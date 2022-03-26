@@ -1,11 +1,10 @@
 #include "oclint/AbstractASTVisitorRule.h"
 #include "oclint/RuleSet.h"
 #include "oclint/util/ASTUtil.h"
-#include "oclint/util/ASTUtil2.h"
 #include "oclint/metric/CyclomaticComplexityMetric.h"
 #include "oclint/metric/MethodMaxNestingMetric.h"
 #include "oclint/metric/MethodNumOfLocalVarsMetric.h"
-#include <iostream>
+#include "oclint/metric/AccessToLocalDataMetric.h"
 
 using namespace std;
 using namespace clang;
@@ -71,9 +70,9 @@ public:
         if (decl->isClass() || decl->isStruct())
         {
             clang::SourceManager &sourceManager = _carrier->getSourceManager();
-            auto visitor1 = MethodVisitor1{sourceManager};
-//            visitor1.TraverseDecl(decl);
 
+            auto visitor1 = MethodVisitor1{sourceManager};
+            visitor1.TraverseDecl(decl);
             if (visitor1.maxLinesCount >= 33 && visitor1.maxCyclomaticComplexity >= 7 && visitor1.maxMaxNesting >= 6)
             {
                 addViolation(decl, this, "Class `" + decl->getNameAsString() + "`, LOC = " +
@@ -83,6 +82,15 @@ public:
             }
 
             auto visitor2 = MethodVisitor2{};
+            double meanLocalVarsCount = (double)visitor2.sumLocalVarsCount / visitor2.methodsCount;
+            double meanFieldsAccessCount = (double)visitor2.sumFieldsAccessCount / visitor2.methodsCount;
+            if (meanLocalVarsCount >= 6.0 && meanFieldsAccessCount >= 5.0)
+            {
+                addViolation(decl, this, "Class `" + decl->getNameAsString() + "`, SUM(NOLV) = " +
+                                         to_string(visitor2.sumLocalVarsCount) + ", SUM(ATLD) = " + to_string(visitor2.sumFieldsAccessCount) +
+                                         ", Methods count = " + to_string(visitor2.methodsCount));
+                return;
+            }
             visitor2.TraverseDecl(decl);
         }
     }
@@ -194,7 +202,7 @@ private:
     public:
         int methodsCount;
         long sumLocalVarsCount;
-        long sumFieldsAccessCount;
+        size_t sumFieldsAccessCount;
 
         explicit MethodVisitor2() :
             methodsCount{0}, sumLocalVarsCount{0}, sumFieldsAccessCount{0} {}
@@ -203,7 +211,7 @@ private:
         {
             methodsCount++;
             sumLocalVarsCount += (MethodNumOfLocalVarsMetric{}).calculate(decl);
-            bool c = isSetterMethod(decl);
+            sumFieldsAccessCount += (AccessToLocalDataMetric{decl}).calculate();
             return true;
         }
     };

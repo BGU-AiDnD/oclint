@@ -15,6 +15,9 @@ bool MethodNumOfLocalVarsMetric::VisitVarDecl(clang::VarDecl *decl)
     // TODO: Should include static variables?
     // TODO: Should check `decl->isLocalVarDeclOrParm()` before incrementing
     //   the counter?
-    count++;
+    if (decl->isLocalVarDeclOrParm())
+    {
+        count++;
+    }
     return true;
 }

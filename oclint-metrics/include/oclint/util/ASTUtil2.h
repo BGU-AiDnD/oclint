@@ -11,9 +11,6 @@ clang::QualType getCanonicalTypeOfTypeDecl(clang::TypeDecl *decl);
 bool areOfSameUnderlyingType(clang::QualType type, clang::TypeDecl *typeDecl);
 
 clang::RecordDecl *recordDeclOf(clang::FunctionDecl *functionDecl);
-clang::FieldDecl *extractFieldDeclFromMemberExpr(
-    clang::MemberExpr *memberExpr, clang::RecordDecl *recordDecl
-);
 
 bool isNormalMethod(clang::FunctionDecl *decl);
 bool isGetterMethod(clang::FunctionDecl *decl);

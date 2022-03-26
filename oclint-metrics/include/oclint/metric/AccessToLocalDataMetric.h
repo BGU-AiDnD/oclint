@@ -3,13 +3,18 @@
 
 #include <clang/AST/AST.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include "oclint/util/FieldDeclVisitorBase.h"
 
 namespace oclint
 {
-    class AccessToLocalDataMetric : public clang::RecursiveASTVisitor<AccessToLocalDataMetric>
+    class AccessToLocalDataMetric : public FieldDeclVisitorBase<AccessToLocalDataMetric>
     {
     public:
-        int calculate(clang::FunctionDecl *decl);
+        explicit AccessToLocalDataMetric(clang::FunctionDecl *functionDecl);
+
+        size_t calculate();
+
+        bool VisitCXXMemberCallExpr(clang::CXXMemberCallExpr *expr);
     };
 }
 

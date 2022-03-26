@@ -1,30 +1,21 @@
 #include "oclint/util/FieldDeclFinderVisitor.h"
-#include "oclint/util/ASTUtil2.h"
+#include <utility>
 
 FieldDeclFinderVisitor::FieldDeclFinderVisitor(clang::FunctionDecl *functionDecl) :
-    functionDecl{functionDecl}, recordDecl{recordDeclOf(functionDecl)}
-{
-    fieldDecls = std::make_shared<std::vector<clang::FieldDecl*>>();
-}
+    FieldDeclVisitorBase<FieldDeclFinderVisitor>{functionDecl} {}
 
-std::shared_ptr<std::vector<clang::FieldDecl*>> FieldDeclFinderVisitor::findAll()
+FieldDeclFinderVisitor::FieldDeclFinderVisitor(
+    clang::FunctionDecl *functionDecl,
+    std::shared_ptr<std::unordered_set<clang::FieldDecl*>> fieldDecls
+) : FieldDeclVisitorBase<FieldDeclFinderVisitor>{functionDecl, std::move(fieldDecls)} {}
+
+bool FieldDeclFinderVisitor::insertAll()
 {
     if (recordDecl == nullptr)
     {
-        return nullptr;
+        return false;
     }
 
     TraverseDecl(functionDecl);
-    return fieldDecls;
-}
-
-bool FieldDeclFinderVisitor::VisitMemberExpr(clang::MemberExpr *memberExpr)
-{
-    clang::FieldDecl *fieldDecl = extractFieldDeclFromMemberExpr(memberExpr, recordDecl);
-    if (fieldDecl != nullptr)
-    {
-        fieldDecls->push_back(fieldDecl);
-    }
-
     return true;
 }

@@ -33,20 +33,6 @@ clang::RecordDecl *recordDeclOf(clang::FunctionDecl *functionDecl)
     return clang::dyn_cast<clang::RecordDecl>(functionDecl->getDeclContext());
 }
 
-clang::FieldDecl *extractFieldDeclFromMemberExpr(
-    clang::MemberExpr *memberExpr, clang::RecordDecl *recordDecl
-)
-{
-    auto *fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl());
-    if (fieldDecl != nullptr &&
-        fieldDecl->getParent()->getCanonicalDecl() != recordDecl->getCanonicalDecl())
-    {
-        fieldDecl = nullptr;
-    }
-
-    return fieldDecl;
-}
-
 bool isAccessorName(const clang::StringRef nameRef, const char firstLetter)
 {
     std::stringstream regexPatternSs;

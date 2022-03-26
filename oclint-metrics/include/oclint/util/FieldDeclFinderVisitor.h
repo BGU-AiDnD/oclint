@@ -3,26 +3,23 @@
 
 #include <clang/AST/AST.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <unordered_set>
+#include "FieldDeclVisitorBase.h"
 
-class FieldDeclFinderVisitor : public clang::RecursiveASTVisitor<FieldDeclFinderVisitor>
+class FieldDeclFinderVisitor : public FieldDeclVisitorBase<FieldDeclFinderVisitor>
 {
-private:
-    clang::FunctionDecl *functionDecl;
-    clang::RecordDecl *recordDecl;
-    std::shared_ptr<std::vector<clang::FieldDecl*>> fieldDecls;
-
 public:
     explicit FieldDeclFinderVisitor(clang::FunctionDecl *functionDecl);
+    FieldDeclFinderVisitor(
+        clang::FunctionDecl *functionDecl,
+        std::shared_ptr<std::unordered_set<clang::FieldDecl*>> fieldDecls
+    );
 
-    std::shared_ptr<std::vector<clang::FieldDecl*>> findAll();
-
-    bool VisitMemberExpr(clang::MemberExpr *memberExpr);
-
-    ~FieldDeclFinderVisitor() = default;
-    FieldDeclFinderVisitor(FieldDeclFinderVisitor const& other) = default;
-    FieldDeclFinderVisitor(FieldDeclFinderVisitor && other) = default;
-    FieldDeclFinderVisitor& operator=(FieldDeclFinderVisitor const& other) = default;
-    FieldDeclFinderVisitor& operator=(FieldDeclFinderVisitor && other) = default;
+    bool insertAll();
+    inline std::shared_ptr<std::unordered_set<clang::FieldDecl*>> findAll()
+    {
+        return insertAll() ? fieldDecls : nullptr;
+    }
 };
 
 #endif //OCLINT_METRICS_FIELDDECLFINDERVISITOR_H
