@@ -6,6 +6,7 @@ SET (MetricSource
     NPathComplexityMetric.cpp
     StmtDepthMetric.cpp
 
+    AccessToLocalDataMetric.cpp
     ClassPublicAccessorCountMetric.cpp
     ClassPublicFieldCountMetric.cpp
     ClassPublicMethodCountMetric.cpp

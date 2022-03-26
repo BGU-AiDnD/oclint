@@ -10,6 +10,10 @@ clang::QualType getCanonicalTypeUnqualifiedNoPointer(clang::QualType type);
 clang::QualType getCanonicalTypeOfTypeDecl(clang::TypeDecl *decl);
 bool areOfSameUnderlyingType(clang::QualType type, clang::TypeDecl *typeDecl);
 
+clang::FieldDecl *extractFieldDeclFromMemberExpr(
+    clang::MemberExpr *memberExpr, clang::RecordDecl *recordDecl
+);
+
 bool isNormalMethod(clang::FunctionDecl *decl);
 bool isGetterMethod(clang::FunctionDecl *decl);
 bool isSetterMethod(clang::FunctionDecl *decl);
