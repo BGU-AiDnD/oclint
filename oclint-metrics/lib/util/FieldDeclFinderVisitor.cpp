@@ -2,8 +2,7 @@
 #include "oclint/util/ASTUtil2.h"
 
 FieldDeclFinderVisitor::FieldDeclFinderVisitor(clang::FunctionDecl *functionDecl) :
-    functionDecl{functionDecl},
-    recordDecl{clang::dyn_cast<clang::RecordDecl>(functionDecl->getDeclContext())}
+    functionDecl{functionDecl}, recordDecl{recordDeclOf(functionDecl)}
 {
     fieldDecls = std::make_shared<std::vector<clang::FieldDecl*>>();
 }

@@ -28,6 +28,11 @@ bool isVoidType(clang::QualType type)
            type.getCanonicalType().getTypePtr()->getUnqualifiedDesugaredType()->isVoidType();
 }
 
+clang::RecordDecl *recordDeclOf(clang::FunctionDecl *functionDecl)
+{
+    return clang::dyn_cast<clang::RecordDecl>(functionDecl->getDeclContext());
+}
+
 clang::FieldDecl *extractFieldDeclFromMemberExpr(
     clang::MemberExpr *memberExpr, clang::RecordDecl *recordDecl
 )
@@ -97,7 +102,7 @@ bool hasGetterStructure(clang::FunctionDecl *decl)
           implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
           (memberExpr = clang::dyn_cast<clang::MemberExpr>(implicitCastExpr->getSubExpr())) &&
           (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
-          (functionRecordDecl = clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) &&
+          (functionRecordDecl = recordDeclOf(decl)) &&
           fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl()))
     {
         return false;
@@ -143,7 +148,7 @@ bool hasSetterStructure(clang::FunctionDecl *decl)
     clang::DeclRefExpr *declRefExpr;
     clang::VarDecl *referencedVarDecl;
     clang::ParmVarDecl *paramVarDecl = decl->getParamDecl(0);
-    if (!((functionRecordDecl = clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) &&
+    if (!((functionRecordDecl = recordDeclOf(decl)) &&
           (binaryOperator = clang::dyn_cast<clang::BinaryOperator>(firstStmt)) &&
           binaryOperator->getOpcode() == clang::BO_Assign &&
           (memberExpr = clang::dyn_cast<clang::MemberExpr>(binaryOperator->getLHS())) &&
