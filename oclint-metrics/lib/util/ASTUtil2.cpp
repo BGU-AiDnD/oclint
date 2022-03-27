@@ -79,14 +79,11 @@ bool hasGetterStructure(clang::FunctionDecl *decl)
 
     clang::Stmt *stmt = *compoundStmt->body_begin();
     clang::ReturnStmt *returnStmt;
-    clang::ImplicitCastExpr *implicitCastExpr;
     clang::MemberExpr *memberExpr;
     clang::FieldDecl *fieldDecl;
     clang::RecordDecl *functionRecordDecl;
     if (!((returnStmt = clang::dyn_cast<clang::ReturnStmt>(stmt)) &&
-          (implicitCastExpr = clang::dyn_cast<clang::ImplicitCastExpr>(returnStmt->getRetValue())) &&
-          implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
-          (memberExpr = clang::dyn_cast<clang::MemberExpr>(implicitCastExpr->getSubExpr())) &&
+          (memberExpr = clang::dyn_cast<clang::MemberExpr>(returnStmt->getRetValue()->IgnoreUnlessSpelledInSource())) &&
           (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
           (functionRecordDecl = recordDeclOf(decl)) &&
           fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl()))
@@ -130,19 +127,16 @@ bool hasSetterStructure(clang::FunctionDecl *decl)
     clang::BinaryOperator *binaryOperator;
     clang::MemberExpr *memberExpr;
     clang::FieldDecl *fieldDecl;
-    clang::ImplicitCastExpr *implicitCastExpr;
     clang::DeclRefExpr *declRefExpr;
     clang::VarDecl *referencedVarDecl;
     clang::ParmVarDecl *paramVarDecl = decl->getParamDecl(0);
     if (!((functionRecordDecl = recordDeclOf(decl)) &&
-          (binaryOperator = clang::dyn_cast<clang::BinaryOperator>(firstStmt)) &&
+          (binaryOperator = clang::dyn_cast<clang::BinaryOperator>(clang::dyn_cast<clang::Expr>(firstStmt))) &&
           binaryOperator->getOpcode() == clang::BO_Assign &&
           (memberExpr = clang::dyn_cast<clang::MemberExpr>(binaryOperator->getLHS())) &&
           (fieldDecl = clang::dyn_cast<clang::FieldDecl>(memberExpr->getMemberDecl())) &&
           fieldDecl->getParent()->getCanonicalDecl() == functionRecordDecl->getCanonicalDecl() &&
-          (implicitCastExpr = clang::dyn_cast<clang::ImplicitCastExpr>(binaryOperator->getRHS())) &&
-          implicitCastExpr->getCastKind() == clang::CK_LValueToRValue &&
-          (declRefExpr = clang::dyn_cast<clang::DeclRefExpr>(implicitCastExpr->getSubExpr())) &&
+          (declRefExpr = clang::dyn_cast<clang::DeclRefExpr>(binaryOperator->getRHS()->IgnoreUnlessSpelledInSource())) &&
           (referencedVarDecl = clang::dyn_cast<clang::VarDecl>(declRefExpr->getDecl())) &&
           paramVarDecl->getCanonicalDecl() == referencedVarDecl->getCanonicalDecl()))
     {
@@ -169,7 +163,7 @@ bool hasSetterStructure(clang::FunctionDecl *decl)
         clang::Stmt *secondStmt = *bodyStatementsIt;
         clang::ReturnStmt *returnStmt;
         if (!((returnStmt = clang::dyn_cast<clang::ReturnStmt>(secondStmt)) &&
-              clang::isa<clang::CXXThisExpr>(returnStmt->getRetValue())))
+              clang::isa<clang::CXXThisExpr>(returnStmt->getRetValue()->IgnoreUnlessSpelledInSource())))
         {
             return false;
         }
@@ -190,6 +184,8 @@ bool isGetterMethod(clang::FunctionDecl *decl)
     // TODO: When checking for the name, maybe need to check that the
     //  cyclomatic complexity is 0 or alternatively that there is only a
     //  return statement.
+
+    // TODO: Look into AST matchers
 
     // TODO: Support static methods as well. They have a slightly different
     //   structure. That way, we can use that in the anti singleton rule.
