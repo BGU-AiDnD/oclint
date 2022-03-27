@@ -191,6 +191,8 @@ bool isGetterMethod(clang::FunctionDecl *decl)
     //  cyclomatic complexity is 0 or alternatively that there is only a
     //  return statement.
 
+    // TODO: Support static methods as well. They have a slightly different
+    //   structure. That way, we can use that in the anti singleton rule.
     // TODO: Advanced: Handle other implicit casts like integer conversions and
     //  inheritance up casting. (Maybe using a while loop ignoring every
     //  implicit cast but the last and only checking it).
@@ -208,6 +210,8 @@ bool isSetterMethod(clang::FunctionDecl *decl)
     // TODO: Same with getter, maybe check cyclomatic complexity or simple
     //  structure (along with the name).
     // TODO: Same with getter, handle other implicit casts.
+
+    // TODO: Support static methods as well.
 
     // TODO: Decide on what makes a 'setter'. For example, is the following
     //   a setter: `this->x += x;`?
