@@ -82,6 +82,7 @@ public:
             }
 
             auto visitor2 = MethodVisitor2{};
+            visitor2.TraverseDecl(decl);
             double meanLocalVarsCount = (double)visitor2.sumLocalVarsCount / visitor2.methodsCount;
             double meanFieldsAccessCount = (double)visitor2.sumFieldsAccessCount / visitor2.methodsCount;
             if (meanLocalVarsCount >= 6.0 && meanFieldsAccessCount >= 5.0)
@@ -91,7 +92,6 @@ public:
                                          ", Methods count = " + to_string(visitor2.methodsCount));
                 return;
             }
-            visitor2.TraverseDecl(decl);
         }
     }
 
