@@ -6,6 +6,8 @@
       <excludeFolder url="file://$MODULE_DIR$/oclint-metrics/cmake-build-debug/CMakeFiles" />
       <excludeFolder url="file://$MODULE_DIR$/oclint-rules/cmake-build-debug/.cmake" />
       <excludeFolder url="file://$MODULE_DIR$/oclint-rules/cmake-build-debug/CMakeFiles" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
+      <excludeFolder url="file://$MODULE_DIR$/googletest" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
